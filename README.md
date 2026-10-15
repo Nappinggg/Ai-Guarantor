@@ -1,10 +1,10 @@
-# 🛡️ AI Guarantor
+# GuarantorAI
 
 **A neutral AI escrow agent that obeys the contract, not whoever is giving orders.**
 
 Track 01, *Agents that spend*. All money moves in **Stripe test mode**.
 
-Two strangers want to do a deal: a client and a freelancer. The client fears paying for nothing, and the freelancer fears working for nothing. AI Guarantor sits in the middle:
+Two strangers want to do a deal: a client and a freelancer. The client fears paying for nothing, and the freelancer fears working for nothing. GuarantorAI sits in the middle:
 
 1. Both parties describe the deal in plain words. The agent turns it into a contract made of **clauses**, each with an amount and the **evidence** that proves it was delivered.
 2. Both approve, and the contract becomes the agent's rules.

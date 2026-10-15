@@ -1,4 +1,4 @@
-"""AI Guarantor API. Run: .venv/Scripts/python.exe -m uvicorn backend.app:app --reload --port 8000"""
+"""GuarantorAI API. Run: .venv/Scripts/python.exe -m uvicorn backend.app:app --reload --port 8000"""
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -14,7 +14,7 @@ from pydantic import BaseModel  # noqa: E402
 from . import github_svc, llm, rules, store, stripe_svc  # noqa: E402
 from .policy import POLICY, policy_text  # noqa: E402
 
-app = FastAPI(title="AI Guarantor")
+app = FastAPI(title="GuarantorAI")
 STATIC = Path(__file__).resolve().parent.parent / "static"
 ROLES = {"client", "contractor"}
 
@@ -408,7 +408,7 @@ def chat(body: Chat):
     elif intent["intent"] == "why_question":
         reply = llm.explain(body.message, context, _why_fallback(deal, cid))
     else:
-        reply = llm.explain(body.message, context, "I'm the deal's guarantor. Ask me why a payment was made, "
+        reply = llm.explain(body.message, context, "I'm GuarantorAI, this deal's guarantor. Ask me why a payment was made, "
                                                    "refused or frozen.")
     deal = store.load()
     store.add_event(deal, "agent", "CHAT_REPLY", reply)

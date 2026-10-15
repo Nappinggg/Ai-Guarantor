@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Guarantor | Escrow agent</title>
+<title>GuarantorAI | Escrow agent</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234338ca'/%3E%3Cpath d='M16 6l8 3v6c0 5-3.4 8.8-8 11-4.6-2.2-8-6-8-11V9l8-3z' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M12 15.5l3 3 5-6' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -151,6 +151,12 @@
   a.ext { display: inline-flex; align-items: center; gap: 3px; font-family: "JetBrains Mono", monospace; font-size: 11px; }
 
   .demo-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .foot { border-top: 1px solid var(--line); background: var(--surface); }
+  .foot-inner { max-width: 1380px; margin: 0 auto; padding: 16px 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .foot nav { display: flex; gap: 18px; }
+  .foot a { color: var(--ink-2); font-weight: 500; }
+  dialog#policydlg { border: 1px solid var(--line); border-radius: var(--radius); padding: 0; width: min(680px, calc(100vw - 32px)); box-shadow: 0 20px 50px rgba(16,24,40,.2); color: var(--ink); }
+  dialog#policydlg::backdrop { background: rgba(15,18,34,.4); }
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(8px); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; opacity: 0; transition: all .2s; pointer-events: none; max-width: 90vw; z-index: 10; display: flex; gap: 8px; align-items: center; }
   .toast.show { opacity: 1; transform: translateX(-50%); }
   .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: s .7s linear infinite; }
@@ -165,7 +171,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l8 3v6.2c0 4.9-3.4 8.8-8 10.8-4.6-2-8-5.9-8-10.8V5.5l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>
       </div>
       <div>
-        <div class="brand-name">Guarantor</div>
+        <div class="brand-name">Guarantor<span style="color:var(--brand)">AI</span></div>
         <div class="brand-sub">Autonomous escrow agent</div>
       </div>
     </div>
@@ -183,18 +189,14 @@
 <main>
   <section>
     <div id="deal"></div>
-    <div class="card">
-      <div class="card-h"><h2><span data-icon="shield"></span>Agent policy</h2><span class="hint">Permanent. Neither party can change these rules.</span></div>
-      <div class="card-b policy" id="policy"></div>
-    </div>
   </section>
 
   <section>
     <div class="card">
-      <div class="card-h"><h2><span data-icon="chat"></span>Guarantor assistant</h2><span class="hint">Chat never moves money (P6)</span></div>
+      <div class="card-h"><h2><span data-icon="chat"></span>GuarantorAI</h2><span class="hint">Chat never moves money (P6)</span></div>
       <div id="chatlog"></div>
       <form id="chatform" class="row chat-f">
-        <input id="chatinput" class="grow" placeholder="Ask why a payment was made, or raise an issue" autocomplete="off">
+        <input id="chatinput" class="grow" placeholder="Ask GuarantorAI why a payment was made, or raise an issue" autocomplete="off">
         <button class="primary" id="chatbtn"><span data-icon="send"></span>Send</button>
       </form>
     </div>
@@ -211,6 +213,19 @@
     </div>
   </section>
 </main>
+<footer class="foot">
+  <div class="foot-inner">
+    <span>GuarantorAI · Autonomous escrow agent · Stripe test mode</span>
+    <nav><a href="#" id="policylink">Agent policy</a><a href="https://github.com/Nappinggg/Ai-Guarantor" target="_blank">Source code</a></nav>
+  </div>
+</footer>
+<dialog id="policydlg">
+  <div class="card-h"><h2><span data-icon="shield"></span>GuarantorAI policy</h2><button class="small ghost" id="policyclose"><span data-icon="x"></span>Close</button></div>
+  <div class="card-b">
+    <p class="hint" style="margin-top:0">Permanent rules. Neither party can change them, and every money decision cites one.</p>
+    <div class="policy" id="policy"></div>
+  </div>
+</dialog>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -387,7 +402,7 @@ function renderDeal() {
   } else if (deal.status === "approved") {
     stage = role === "client"
       ? `<div class="stage">
-          <span class="hint grow">${icon("lock")} Deposit the full amount. Funds are held by the guarantor, not paid to Bob.</span>
+          <span class="hint grow">${icon("lock")} Deposit the full amount. Funds are held by GuarantorAI, not paid to Bob.</span>
           <button class="small" id="fundfast">${icon("bolt")}Instant test deposit</button>
           <button class="primary" id="fundbtn">${icon("card")}Deposit ${gbp(deal.total)} via Stripe</button></div>`
       : `<div class="stage"><span class="hint">${icon("clock")} Waiting for Alice to deposit ${gbp(deal.total)}.</span></div>`;
@@ -431,10 +446,10 @@ function renderLog() {
 
 function renderChat() {
   const msgs = (deal?.events || []).filter((e) => e.type === "CHAT" || e.type === "CHAT_REPLY");
-  if (!msgs.length) return `<div class="empty">${icon("chat")}<br>Both parties can ask the guarantor questions here, such as why a payment was made or refused.</div>`;
+  if (!msgs.length) return `<div class="empty">${icon("chat")}<br>Both parties can ask GuarantorAI questions here, such as why a payment was made or refused.</div>`;
   return msgs.map((e) => {
     const who = e.type === "CHAT_REPLY" ? "agent" : e.actor;
-    const p = who === "agent" ? { initial: "G", name: "Guarantor" } : PEOPLE[who];
+    const p = who === "agent" ? { initial: "G", name: "GuarantorAI" } : PEOPLE[who];
     const avatar = who === "agent"
       ? `<span class="avatar agent"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${ICONS.shield}</svg></span>`
       : `<span class="avatar ${who}">${p.initial}</span>`;
@@ -455,7 +470,7 @@ function render(force) {
   Object.entries(typed).forEach(([id, v]) => { const el = document.getElementById(id); if (el && v) el.value = v; });
   $("#log").innerHTML = renderLog();
   const cl = $("#chatlog"); cl.innerHTML = renderChat(); cl.scrollTop = cl.scrollHeight;
-  $("#chatinput").placeholder = `Message the guarantor as ${PEOPLE[role].name}`;
+  $("#chatinput").placeholder = `Message GuarantorAI as ${PEOPLE[role].name}`;
   $("#ffwdlbl").textContent = deal ? `Advance clock ${nextWindow()} days` : "Advance clock";
   bind();
 }
@@ -502,6 +517,9 @@ $("#chatform").addEventListener("submit", (e) => {
     await api("POST", "/chat", { role, message: text });
   });
 });
+$("#policylink").addEventListener("click", (e) => { e.preventDefault(); $("#policydlg").showModal(); });
+$("#policyclose").addEventListener("click", () => $("#policydlg").close());
+$("#policydlg").addEventListener("click", (e) => { if (e.target.id === "policydlg") e.target.close(); });
 $("#ffwd").addEventListener("click", (e) => act(e.currentTarget, () => api("POST", "/deal/fast_forward", {})));
 $("#reset").addEventListener("click", (e) => { if (confirm("Reset the demo deal?")) act(e.currentTarget, () => api("POST", "/deal/reset")); });
 document.querySelectorAll("#roles button").forEach((b) => b.addEventListener("click", () => setRole(b.dataset.role)));

@@ -126,7 +126,7 @@ def classify(message: str) -> dict:
     return {"intent": "other", "clause": clause and clause.upper()}
 
 
-EXPLAIN_SYSTEM = """You are a neutral escrow guarantor agent explaining your own actions.
+EXPLAIN_SYSTEM = """You are GuarantorAI, a neutral escrow agent, explaining your own actions.
 Answer ONLY from the policy, contract and event log provided. For every money action, cite: the clause id and
 deliverable, the policy rule id (P1-P6), the evidence (e.g. PR number, merged, CI), who did what and when (timestamp),
 the amount, and the Stripe id if present. If the log doesn't contain it, say so. Be concise (max 5 sentences)."""
@@ -139,7 +139,7 @@ def explain(question: str, context: str, fallback: str) -> str:
 
 def phrase_refusal(message: str, context: str, fallback: str) -> str:
     text = _complete(
-        "You are an escrow agent. You have ALREADY decided to refuse this request under rule P6 (act only on "
+        "You are GuarantorAI, a neutral escrow agent. You have ALREADY decided to refuse this request under rule P6 (act only on "
         "recorded events, never on chat claims). Politely refuse in 2-3 sentences, cite P6 and the exact clause "
         "status/evidence still missing, and say what recorded event would unlock payment. Do not change the decision.",
         f"{context}\n\nMESSAGE: {message}\n\nFACTS FOR THE REFUSAL: {fallback}",
