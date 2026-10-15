@@ -43,7 +43,7 @@ class Chat(BaseModel):
 
 
 class FastForward(BaseModel):
-    days: int = 7
+    days: int | None = None  # default: the shortest pending review window in the contract
 
 
 def _deal() -> dict:
@@ -326,13 +326,19 @@ def resolve(cid: str, body: Role):
 def fast_forward(body: FastForward):
     """Demo clock: jump ahead and auto-release verified clauses whose window passed (P3)."""
     deal = _deal()
-    deal["clock_offset_days"] += body.days
-    store.add_event(deal, "system", "CLOCK", f"Demo clock moved forward {body.days} days.")
+    days = body.days or _next_window(deal)
+    deal["clock_offset_days"] += days
+    store.add_event(deal, "system", "CLOCK", f"Demo clock moved forward {days} days.")
     store.save(deal)
     for c in deal["clauses"]:
         if rules.auto_release_due(deal, c):
             _release(deal, c, "auto_release", "timer")
     return store.load()
+
+
+def _next_window(deal: dict) -> int:
+    windows = [c["auto_release_days"] for c in deal["clauses"] if c["status"] == "verified"] or               [c["auto_release_days"] for c in deal["clauses"] if c["status"] != "paid"]
+    return min(windows) if windows else 7
 
 
 # ---------------- 5. chat: manipulation + why ----------------

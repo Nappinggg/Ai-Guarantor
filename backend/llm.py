@@ -46,7 +46,10 @@ Return ONLY JSON:
  "clauses": [{"deliverable": str, "amount": number (in pounds), "evidence_type": "github_pr" | "delivery_note",
               "evidence_description": str, "auto_release_days": int}]}
 Rules: amounts must add up to the stated total. Use "github_pr" for software/code/website work (proof = PR merged),
-otherwise "delivery_note". auto_release_days defaults to 7. Keep deliverables short. Use names if given, else "Client"/"Contractor"."""
+otherwise "delivery_note". auto_release_days = the review/objection window the parties agreed: how many days the client
+has to accept or object after delivery before payment releases automatically (e.g. "Alice has 3 days to review" -> 3).
+It can differ per clause. Do NOT use delivery deadlines for it. Only if the terms don't mention a review window, use 7.
+Keep deliverables short. Use names if given, else "Client"/"Contractor"."""
 
 
 def draft_contract(terms: str) -> dict:
@@ -56,8 +59,19 @@ def draft_contract(terms: str) -> dict:
     return fallback_contract(terms)
 
 
+REVIEW_RE = re.compile(r"(\d+)\s*(?:working\s+|business\s+)?days?\b[^.]*?\b(?:review|object|approv|accept|silen|automatic)"
+                       r"|\b(?:review|object|approv|accept|silen|automatic)[^.]*?\b(\d+)\s*(?:working\s+|business\s+)?days?\b", re.I)
+
+
+def review_days(terms: str, default: int = 7) -> int:
+    m = REVIEW_RE.search(terms)
+    return int(m.group(1) or m.group(2)) if m else default
+
+
 def fallback_contract(terms: str) -> dict:
-    amounts = [float(x) for x in re.findall(r"[£$]?\s?(\d+(?:\.\d+)?)", terms)]
+    window = review_days(terms)
+    terms_no_window = REVIEW_RE.sub("", terms)
+    amounts = [float(x) for x in re.findall(r"[£$]?\s?(\d+(?:\.\d+)?)", terms_no_window)]
     total = amounts[0] if amounts else 500
     parts = amounts[1:] if len(amounts) > 2 and abs(sum(amounts[1:]) - total) < 0.01 else [total / 2, total / 2]
     names = ["Mockup / first milestone", "Final delivery / launch"]
@@ -68,7 +82,7 @@ def fallback_contract(terms: str) -> dict:
         "currency": "gbp",
         "clauses": [
             {"deliverable": names[i] if i < 2 else f"Milestone {i+1}", "amount": a, "evidence_type": "github_pr",
-             "evidence_description": "Pull request merged on GitHub", "auto_release_days": 7}
+             "evidence_description": "Pull request merged on GitHub", "auto_release_days": window}
             for i, a in enumerate(parts)
         ],
     }

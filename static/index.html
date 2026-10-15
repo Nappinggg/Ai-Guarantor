@@ -205,7 +205,7 @@
     <div class="demo-bar">
       <span>Demo controls</span>
       <div class="row">
-        <button class="small ghost" id="ffwd"><span data-icon="clock"></span>Advance clock 7 days</button>
+        <button class="small ghost" id="ffwd"><span data-icon="clock"></span><span id="ffwdlbl">Advance clock</span></button>
         <button class="small ghost" id="reset"><span data-icon="reset"></span>Reset deal</button>
       </div>
     </div>
@@ -287,6 +287,12 @@ function setRole(r) {
   render(true);
 }
 
+function nextWindow() {
+  const v = deal.clauses.filter((c) => c.status === "verified").map((c) => c.auto_release_days);
+  const w = v.length ? v : deal.clauses.filter((c) => c.status !== "paid").map((c) => c.auto_release_days);
+  return w.length ? Math.min(...w) : 7;
+}
+
 /* ---------- stepper ---------- */
 
 function renderStepper() {
@@ -312,7 +318,7 @@ function renderNoDeal() {
     <div class="card-h"><h2>${icon("file")}New agreement</h2><span class="hint">Step 1 of 5</span></div>
     <div class="card-b">
       <label class="f" for="terms">Describe the deal in plain language</label>
-      <textarea id="terms">Alice hires Bob to build a landing page website for £500: £250 after the homepage mockup is merged, £250 after the site launches.</textarea>
+      <textarea id="terms">Alice hires Bob to build a landing page website for £500: £250 after the homepage mockup is merged, £250 after the site launches. Alice has 3 days to review each milestone, otherwise payment releases automatically.</textarea>
       <div class="row" style="margin-top:12px">
         <button class="primary" id="draftbtn">${icon("sparkle")}Draft contract</button>
         <span class="hint">The agent structures the terms into clauses. Payment decisions are made by fixed rules, not the AI.</span>
@@ -359,7 +365,7 @@ function clauseHtml(c) {
     <div class="clause-h"><span class="cid">${c.id}</span><span class="name">${esc(c.deliverable)}</span><span class="badge ${c.status}">${c.status}</span><span class="amt">${gbp(c.amount)}</span></div>
     <div class="clause-meta">
       <span>${icon(c.evidence.type === "github_pr" ? "git" : "file")}Proof: ${esc(c.evidence.description)}</span>
-      <span>${icon("timer")}Auto-release after ${c.auto_release_days} days of silence</span>
+      <span>${icon("timer")}Review window: ${c.auto_release_days} day${c.auto_release_days === 1 ? "" : "s"}, then auto-release</span>
     </div>
     ${evidence}
     ${actions ? `<div class="clause-a row">${actions}</div>` : ""}
@@ -450,6 +456,7 @@ function render(force) {
   $("#log").innerHTML = renderLog();
   const cl = $("#chatlog"); cl.innerHTML = renderChat(); cl.scrollTop = cl.scrollHeight;
   $("#chatinput").placeholder = `Message the guarantor as ${PEOPLE[role].name}`;
+  $("#ffwdlbl").textContent = deal ? `Advance clock ${nextWindow()} days` : "Advance clock";
   bind();
 }
 
@@ -495,7 +502,7 @@ $("#chatform").addEventListener("submit", (e) => {
     await api("POST", "/chat", { role, message: text });
   });
 });
-$("#ffwd").addEventListener("click", (e) => act(e.currentTarget, () => api("POST", "/deal/fast_forward", { days: 7 })));
+$("#ffwd").addEventListener("click", (e) => act(e.currentTarget, () => api("POST", "/deal/fast_forward", {})));
 $("#reset").addEventListener("click", (e) => { if (confirm("Reset the demo deal?")) act(e.currentTarget, () => api("POST", "/deal/reset")); });
 document.querySelectorAll("#roles button").forEach((b) => b.addEventListener("click", () => setRole(b.dataset.role)));
 
