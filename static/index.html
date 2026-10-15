@@ -4,16 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GuarantorAI | Escrow agent</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234338ca'/%3E%3Cpath d='M16 6l8 3v6c0 5-3.4 8.8-8 11-4.6-2.2-8-6-8-11V9l8-3z' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M12 15.5l3 3 5-6' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f9f77'/%3E%3Cpath d='M16 6l8 3v6c0 5-3.4 8.8-8 11-4.6-2.2-8-6-8-11V9l8-3z' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M12 15.5l3 3 5-6' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f5f6f8; --surface: #ffffff; --surface-2: #fafbfc; --ink: #0f1222; --ink-2: #3a3f55; --muted: #737a91;
-    --line: #e6e8ee; --line-2: #eff1f5;
-    --brand: #4338ca; --brand-2: #6366f1; --brand-soft: #eef0ff;
+    --bg: #eef6f1; --surface: #ffffff; --surface-2: #f6fbf8; --ink: #0f1222; --ink-2: #3a3f55; --muted: #737a91;
+    --line: #dbe9e1; --line-2: #ebf4ef;
+    --brand: #0f9f77; --brand-2: #3ccf9c; --brand-soft: #e1f5ec;
     --client: #2563eb; --client-soft: #eaf1ff; --contractor: #c2410c; --contractor-soft: #fff1e8;
-    --ok: #0f9d58; --ok-soft: #e7f6ee; --warn: #b45309; --warn-soft: #fef5e7;
+    --ok: #0b8a5f; --ok-soft: #ddf3e8; --warn: #b45309; --warn-soft: #fef5e7;
     --bad: #c62828; --bad-soft: #fdeeee; --frozen: #1d6fd1; --frozen-soft: #e8f1fc;
     --radius: 12px; --shadow: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
   }
@@ -24,16 +24,16 @@
   svg.i { width: 16px; height: 16px; flex: none; vertical-align: -3px; }
 
   /* top bar */
-  .topbar { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+  .topbar { background: rgba(255,255,255,.85); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
   .topbar-inner { max-width: 1380px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
   .brand { display: flex; align-items: center; gap: 10px; }
-  .brand-mark { width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); display: grid; place-items: center; box-shadow: 0 2px 6px rgba(67,56,202,.35); }
+  .brand-mark { width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); display: grid; place-items: center; box-shadow: 0 2px 8px rgba(15,159,119,.35); }
   .brand-name { font-weight: 700; font-size: 17px; letter-spacing: -.01em; }
   .brand-sub { font-size: 12px; color: var(--muted); }
   .env { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--warn); background: var(--warn-soft); border: 1px solid #f8e1bd; padding: 3px 10px; border-radius: 99px; }
   .env::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
   .spacer { flex: 1; }
-  .seg { display: flex; background: var(--line-2); border-radius: 10px; padding: 3px; gap: 3px; }
+  .seg { display: flex; background: var(--brand-soft); border-radius: 10px; padding: 3px; gap: 3px; }
   .seg button { border: 0; background: transparent; padding: 6px 12px 6px 6px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--muted); }
   .seg button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
   .avatar { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; }
@@ -63,7 +63,7 @@
   button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 8px 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 7px; transition: background .12s, border-color .12s; }
   button:hover:not(:disabled) { border-color: #cfd3dd; background: var(--surface-2); }
   button.primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
-  button.primary:hover:not(:disabled) { background: #3730a3; }
+  button.primary:hover:not(:disabled) { background: #0b7f5f; }
   button.good { background: var(--ok); border-color: var(--ok); color: #fff; font-weight: 600; }
   button.good:hover:not(:disabled) { background: #0b7f47; }
   button.danger { color: var(--bad); border-color: #f1c6c6; }
