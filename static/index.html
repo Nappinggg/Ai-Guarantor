@@ -132,6 +132,7 @@ let deal = null;
 let chat = [];
 let busy = false;
 let lastRender = "";
+let stripeAcct = null;
 
 function localStorageGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function localStorageSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
@@ -160,7 +161,8 @@ async function act(btn, fn) {
 function stripeLink(id) {
   if (!id) return "";
   const path = id.startsWith("tr_") ? "connect/transfers/" : "payments/";
-  return `<a class="stripe" target="_blank" href="https://dashboard.stripe.com/test/${path}${esc(id)}">${esc(id)} ↗</a>`;
+  const base = stripeAcct ? `https://dashboard.stripe.com/${stripeAcct}/test/` : "https://dashboard.stripe.com/test/";
+  return `<a class="stripe" target="_blank" href="${base}${path}${esc(id)}">${esc(id)} ↗</a>`;
 }
 
 function setRole(r) {
@@ -346,6 +348,7 @@ async function refresh(force) {
 api("GET", "/policy").then((p) => {
   $("#policy").innerHTML = Object.entries(p).map(([k, v]) => `<li><b>${k}</b> ${esc(v)}</li>`).join("");
 });
+api("GET", "/config").then((c) => { stripeAcct = c.stripe_account; render(true); }).catch(() => {});
 setRole(role);
 refresh(true);
 setInterval(() => { if (!busy) refresh(false); }, 2000);

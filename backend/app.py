@@ -76,6 +76,15 @@ def get_policy():
     return POLICY
 
 
+@app.get("/config")
+def config():
+    """Platform account id so dashboard links open the right sandbox."""
+    try:
+        return {"stripe_account": stripe_svc.stripe.Account.retrieve().id}
+    except Exception:  # noqa: BLE001
+        return {"stripe_account": None}
+
+
 @app.get("/deal")
 def get_deal():
     deal = store.load()
