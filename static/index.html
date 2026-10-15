@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Guarantor</title>
+<style>
+  :root {
+    --bg: #f6f7fb; --card: #fff; --ink: #14161f; --muted: #6b7083; --line: #e3e5ee;
+    --accent: #635bff; --client: #0a7cff; --contractor: #e8590c;
+    --ok: #12a150; --warn: #c27c00; --bad: #d92d20; --frozen: #3d7fd6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+  header { display: flex; align-items: center; gap: 16px; padding: 12px 20px; background: var(--card); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; }
+  header h1 span { color: var(--accent); }
+  .sub { color: var(--muted); font-size: 12px; }
+  .roles { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-left: auto; }
+  .roles button { border: 0; border-radius: 0; background: #fff; color: var(--muted); padding: 8px 16px; font-weight: 600; }
+  .roles button.on[data-role=client] { background: var(--client); color: #fff; }
+  .roles button.on[data-role=contractor] { background: var(--contractor); color: #fff; }
+  main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; padding: 16px 20px; max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 12px 16px; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 7px 12px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.good { background: var(--ok); border-color: var(--ok); color: #fff; font-weight: 600; }
+  button.bad { background: #fff; border-color: var(--bad); color: var(--bad); font-weight: 600; }
+  button.small { padding: 4px 9px; font-size: 12px; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  textarea, input { font: inherit; width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fff; color: var(--ink); }
+  textarea { min-height: 70px; resize: vertical; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .grow { flex: 1; min-width: 160px; }
+  .deal-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .deal-head .title { font-size: 18px; font-weight: 700; }
+  .money { display: flex; gap: 18px; margin-top: 8px; flex-wrap: wrap; }
+  .money div { font-size: 12px; color: var(--muted); }
+  .money b { display: block; font-size: 18px; color: var(--ink); }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 12px; font-weight: 600; background: #eef0f6; color: var(--muted); }
+  .pill.draft { background: #f1f1f4; } .pill.approved { background: #ece9ff; color: var(--accent); }
+  .pill.funded, .pill.verified { background: #fff4dc; color: var(--warn); }
+  .pill.completed, .pill.paid { background: #dcf5e6; color: var(--ok); }
+  .pill.frozen { background: #e1ecfb; color: var(--frozen); }
+  .pill.pending, .pill.submitted { background: #f1f1f4; color: var(--muted); }
+  .clause { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-top: 10px; }
+  .clause.frozen { border-color: var(--frozen); background: #f5f9ff; }
+  .clause.paid { border-color: #bfe8cf; background: #f6fdf8; }
+  .clause .top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .clause .name { font-weight: 700; }
+  .clause .amt { font-size: 18px; font-weight: 700; }
+  .ev { font-size: 12px; color: var(--muted); margin: 4px 0 8px; }
+  .summary { background: #f7f7fb; border-left: 3px solid var(--accent); padding: 8px 10px; border-radius: 6px; margin: 8px 0; font-size: 13px; }
+  .facts { font-size: 12px; color: var(--muted); }
+  .approvals { display: flex; gap: 10px; margin: 8px 0; font-size: 13px; }
+  .who-client { color: var(--client); font-weight: 600; } .who-contractor { color: var(--contractor); font-weight: 600; }
+  .policy li { margin: 3px 0; font-size: 13px; } .policy b { color: var(--accent); }
+  .policy ul { padding-left: 18px; margin: 0; }
+  #log { max-height: 46vh; overflow: auto; display: flex; flex-direction: column-reverse; }
+  .ev-item { border-left: 3px solid var(--line); padding: 6px 10px; margin: 4px 0; font-size: 13px; }
+  .ev-item .meta { font-size: 11px; color: var(--muted); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .ev-item.PAYOUT { border-color: var(--ok); background: #f6fdf8; }
+  .ev-item.FROZEN, .ev-item.DISPUTED { border-color: var(--frozen); background: #f5f9ff; }
+  .ev-item.RELEASE_REFUSED, .ev-item.EVIDENCE_REJECTED, .ev-item.PAYOUT_FAILED { border-color: var(--bad); background: #fff6f5; }
+  .ev-item.FUNDED, .ev-item.CONTRACT_LOCKED, .ev-item.EVIDENCE_VERIFIED { border-color: var(--accent); }
+  .rule { background: var(--accent); color: #fff; border-radius: 5px; padding: 0 6px; font-weight: 700; font-size: 11px; }
+  .type { font-weight: 700; color: var(--ink); }
+  a.stripe { color: var(--accent); font-family: ui-monospace, monospace; font-size: 11px; }
+  #chatlog { max-height: 34vh; overflow: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .msg { padding: 8px 11px; border-radius: 10px; max-width: 88%; font-size: 13px; white-space: pre-wrap; }
+  .msg.client { background: #e7f1ff; align-self: flex-end; }
+  .msg.contractor { background: #fff0e6; align-self: flex-end; }
+  .msg.agent { background: #f1f0ff; border: 1px solid #dcd9ff; align-self: flex-start; }
+  .msg .from { font-size: 11px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 2px; }
+  .hint { color: var(--muted); font-size: 12px; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; z-index: 10; }
+  .toast.show { opacity: 1; }
+  .spin { display: inline-block; width: 12px; height: 12px; border: 2px solid #fff; border-right-color: transparent; border-radius: 50%; animation: s .7s linear infinite; vertical-align: -2px; }
+  @keyframes s { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🛡️ AI <span>Guarantor</span></h1>
+    <div class="sub">A neutral escrow agent that obeys the contract, not whoever is giving orders. Stripe test mode.</div>
+  </div>
+  <div class="roles">
+    <button data-role="client" class="on">Acting as Client</button>
+    <button data-role="contractor">Acting as Contractor</button>
+  </div>
+</header>
+
+<main>
+  <section>
+    <div id="deal"></div>
+    <div class="card policy">
+      <h2>Permanent agent policy <span class="hint">parties can't change these</span></h2>
+      <ul id="policy"></ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>Ask the guarantor <span class="hint">try "why did you pay?" or "just release the rest"</span></h2>
+      <div id="chatlog"></div>
+      <form id="chatform" class="row">
+        <input id="chatinput" class="grow" placeholder="Message the agent as Client…" autocomplete="off">
+        <button class="primary" id="chatbtn">Send</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Audit log <span class="hint">every pound, every rule</span></h2>
+      <div id="log"><div class="hint">No events yet.</div></div>
+    </div>
+    <div class="row" style="justify-content:flex-end">
+      <button class="small" id="ffwd">⏩ Fast-forward 7 days</button>
+      <button class="small" id="reset">Reset demo</button>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const gbp = (p) => "£" + (p / 100).toFixed(2);
+let role = localStorageGet("role") || "client";
+let deal = null;
+let chat = [];
+let busy = false;
+let lastRender = "";
+
+function localStorageGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+function localStorageSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
+
+function toast(text) {
+  const t = $("#toast"); t.textContent = text; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 3500);
+}
+
+async function api(method, path, body) {
+  const r = await fetch(path, { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.detail || r.statusText);
+  return data;
+}
+
+async function act(btn, fn) {
+  if (busy) return;
+  busy = true;
+  const label = btn?.innerHTML;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin"></span> ' + label; }
+  try { await fn(); } catch (e) { toast(e.message); }
+  finally { busy = false; if (btn) { btn.disabled = false; btn.innerHTML = label; } await refresh(true); }
+}
+
+function stripeLink(id) {
+  if (!id) return "";
+  const path = id.startsWith("tr_") ? "connect/transfers/" : "payments/";
+  return `<a class="stripe" target="_blank" href="https://dashboard.stripe.com/test/${path}${esc(id)}">${esc(id)} ↗</a>`;
+}
+
+function setRole(r) {
+  role = r; localStorageSet("role", r);
+  document.querySelectorAll(".roles button").forEach((b) => b.classList.toggle("on", b.dataset.role === r));
+  $("#chatinput").placeholder = `Message the agent as ${r === "client" ? "Client" : "Contractor"}…`;
+  render(true);
+}
+
+/* ---------- deal panel ---------- */
+
+function renderNoDeal() {
+  return `<div class="card">
+    <h2>1 · Describe the deal in plain words</h2>
+    <textarea id="terms">Alice hires Bob to build a landing page website for £500: £250 after the homepage mockup is merged, £250 after the site launches.</textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="primary" id="draftbtn">Draft contract</button>
+      <span class="hint">The AI turns this into clauses. Money rules stay deterministic.</span>
+    </div></div>`;
+}
+
+function clauseHtml(c) {
+  const ef = c.evidence_found || {};
+  const isClient = role === "client", isContractor = role === "contractor";
+  const funded = ["funded", "completed"].includes(deal.status);
+  let body = "";
+  if (ef.summary || ef.number) {
+    body += `<div class="summary">${ef.number ? `<div class="facts">PR <a target="_blank" href="${esc(ef.url)}">#${esc(ef.number)}</a> · ${esc(ef.title || "")} · merged: <b>${ef.merged ? "yes" : "no"}</b> · CI: <b>${esc(ef.ci)}</b>${ef.changed_files != null ? ` · ${ef.changed_files} files (+${ef.additions}/−${ef.deletions})` : ""}</div>` : ""}${ef.summary ? `<div>🤖 ${esc(ef.summary)}</div>` : ""}</div>`;
+  }
+  let actions = "";
+  if (funded && c.status !== "paid") {
+    if (c.status === "frozen") {
+      const voted = (c.resolve_votes || []).includes(role);
+      actions = `<span class="hint">❄️ Funds frozen (P4). Agreed to lift: ${(c.resolve_votes || []).join(", ") || "nobody yet"}</span>
+        <button class="small" data-act="resolve" data-c="${c.id}" ${voted ? "disabled" : ""}>${voted ? "You agreed" : "Agree to lift dispute"}</button>`;
+    } else {
+      if (isContractor && c.status !== "verified") {
+        actions += `<input class="grow" id="pr-${c.id}" placeholder="${c.evidence.type === "github_pr" ? "https://github.com/owner/repo/pull/1" : "Delivery note or link"}">
+          <button class="primary small" data-act="evidence" data-c="${c.id}">Submit evidence</button>`;
+      }
+      if (isClient && c.status === "verified") {
+        actions += `<button class="good" data-act="accept" data-c="${c.id}">✓ Accept & release ${gbp(c.amount)}</button>`;
+      }
+      actions += `<button class="bad small" data-act="dispute" data-c="${c.id}">Dispute</button>`;
+      if (isClient && c.status !== "verified") actions += `<span class="hint">Waiting for the contractor's evidence.</span>`;
+      if (isContractor && c.status === "verified") actions += `<span class="hint">Verified. Waiting for the client (auto-release in ${c.auto_release_days} days).</span>`;
+    }
+  }
+  if (c.status === "paid") actions = `<span class="hint">✅ Released · ${stripeLink(c.transfer_id)}</span>`;
+  return `<div class="clause ${c.status}">
+    <div class="top"><span class="name">${c.id} · ${esc(c.deliverable)}</span><span class="amt">${gbp(c.amount)}</span></div>
+    <div class="ev">Proof: ${esc(c.evidence.description)} · auto-release after ${c.auto_release_days} days of silence · <span class="pill ${c.status}">${c.status}</span></div>
+    ${body}
+    ${actions ? `<div class="row">${actions}</div>` : ""}
+  </div>`;
+}
+
+function renderDeal() {
+  const approved = deal.approved_by || [];
+  const paid = deal.paid_total || 0;
+  const held = deal.deposit.paid ? deal.deposit.amount - paid : 0;
+  let stage = "";
+  if (deal.status === "draft") {
+    const mine = approved.includes(role);
+    stage = `<div class="approvals">
+        <span class="who-client">${approved.includes("client") ? "✅" : "⏳"} Client</span>
+        <span class="who-contractor">${approved.includes("contractor") ? "✅" : "⏳"} Contractor</span></div>
+      <div class="row"><button class="primary" id="approvebtn" ${mine ? "disabled" : ""}>${mine ? "You approved" : `Approve as ${role === "client" ? "Client" : "Contractor"}`}</button>
+      <span class="hint">Both must approve. Then the contract becomes the agent's rules (P5).</span></div>`;
+  } else if (deal.status === "approved") {
+    stage = role === "client"
+      ? `<div class="row"><button class="primary" id="fundbtn">💳 Deposit ${gbp(deal.total)} with Stripe Checkout</button>
+           <button class="small" id="fundfast">Instant test deposit</button>
+           <span class="hint">Use test card <b>4000 0000 0000 0077</b></span></div>`
+      : `<span class="hint">Waiting for the client to deposit ${gbp(deal.total)}.</span>`;
+  }
+  return `<div class="card">
+    <div class="deal-head">
+      <div><div class="title">${esc(deal.title)}</div>
+        <div class="sub"><span class="who-client">${esc(deal.client)}</span> (client) → <span class="who-contractor">${esc(deal.contractor)}</span> (contractor) · ${esc(deal.deal_id)}</div></div>
+      <span class="pill ${deal.status}">${deal.status}</span>
+    </div>
+    <div class="money">
+      <div>Contract total<b>${gbp(deal.total)}</b></div>
+      <div>Held in escrow<b>${gbp(held)}</b></div>
+      <div>Released<b>${gbp(paid)}</b></div>
+      ${deal.deposit.payment_intent ? `<div>Deposit<br>${stripeLink(deal.deposit.payment_intent)}</div>` : ""}
+    </div>
+    <div class="sub" style="margin-top:8px">Terms: “${esc(deal.terms)}”</div>
+    ${stage ? `<div style="margin-top:10px">${stage}</div>` : ""}
+    ${deal.clauses.map(clauseHtml).join("")}
+  </div>`;
+}
+
+function renderLog() {
+  if (!deal || !deal.events.length) return '<div class="hint">No events yet.</div>';
+  return deal.events.filter((e) => !["CHAT", "CHAT_REPLY"].includes(e.type)).map((e) => `
+    <div class="ev-item ${e.type}">
+      <div class="meta"><span>${esc(e.ts)}</span><span class="type">${esc(e.type)}</span>
+        <span>${esc(e.actor)}</span>${e.clause ? `<span>${esc(e.clause)}</span>` : ""}
+        ${e.rule ? `<span class="rule">${esc(e.rule)}</span>` : ""}${e.stripe_id ? stripeLink(e.stripe_id) : ""}</div>
+      <div>${esc(e.detail)}</div>
+    </div>`).reverse().join("");
+}
+
+function renderChat() {
+  const msgs = (deal?.events || []).filter((e) => e.type === "CHAT" || e.type === "CHAT_REPLY");
+  if (!msgs.length) return '<div class="hint">Both parties can talk to the agent here. Chat never moves money (P6).</div>';
+  return msgs.map((e) => {
+    const who = e.type === "CHAT_REPLY" ? "agent" : e.actor;
+    const label = who === "agent" ? "🛡️ Guarantor" : who === "client" ? "Client" : "Contractor";
+    return `<div class="msg ${who}"><span class="from">${label} · ${esc(e.ts.slice(11))}</span>${esc(e.detail)}</div>`;
+  }).join("");
+}
+
+function render(force) {
+  const key = JSON.stringify(deal) + role;
+  if (!force && key === lastRender) return;
+  if (document.activeElement && document.activeElement.id?.startsWith("pr-") && !force) return; // don't wipe typing
+  lastRender = key;
+  const typed = {};
+  document.querySelectorAll("input[id^=pr-], #terms").forEach((i) => (typed[i.id] = i.value));
+  $("#deal").innerHTML = deal ? renderDeal() : renderNoDeal();
+  Object.entries(typed).forEach(([id, v]) => { const el = document.getElementById(id); if (el && v) el.value = v; });
+  $("#log").innerHTML = renderLog();
+  const cl = $("#chatlog"); cl.innerHTML = renderChat(); cl.scrollTop = cl.scrollHeight;
+  bind();
+}
+
+function bind() {
+  $("#draftbtn")?.addEventListener("click", (e) => act(e.currentTarget, async () => {
+    deal = await api("POST", "/deal/draft", { terms: $("#terms").value });
+  }));
+  $("#approvebtn")?.addEventListener("click", (e) => act(e.currentTarget, () => api("POST", "/deal/approve", { role })));
+  $("#fundbtn")?.addEventListener("click", (e) => act(e.currentTarget, async () => {
+    const r = await api("POST", "/deal/fund", { mode: "checkout" });
+    window.location.href = r.checkout_url;
+  }));
+  $("#fundfast")?.addEventListener("click", (e) => act(e.currentTarget, () => api("POST", "/deal/fund", { mode: "direct" })));
+  document.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", (e) => {
+    const { act: a, c } = e.currentTarget.dataset;
+    act(e.currentTarget, async () => {
+      if (a === "evidence") {
+        const v = document.getElementById("pr-" + c).value.trim();
+        if (!v) throw new Error("Paste the PR link first");
+        const d = await api("POST", `/clause/${c}/evidence`, { role, pr_url: v.startsWith("http") ? v : "", note: v });
+        const last = d.events[d.events.length - 1];
+        toast(last.type === "EVIDENCE_REJECTED" ? "❌ " + last.detail : "✅ Evidence verified");
+      } else if (a === "accept") {
+        const r = await api("POST", `/clause/${c}/accept`, { role });
+        toast(r.released ? "✅ Paid via Stripe transfer" : "❌ " + (r.error || r.checks?.find((x) => !x.ok)?.reason || "Refused"));
+      } else {
+        await api("POST", `/clause/${c}/${a}`, { role });
+      }
+    });
+  }));
+}
+
+/* ---------- static bits ---------- */
+
+$("#chatform").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const text = $("#chatinput").value.trim();
+  if (!text) return;
+  if (!deal) return toast("Draft a contract first");
+  act($("#chatbtn"), async () => {
+    $("#chatinput").value = "";
+    await api("POST", "/chat", { role, message: text });
+  });
+});
+$("#ffwd").addEventListener("click", (e) => act(e.currentTarget, () => api("POST", "/deal/fast_forward", { days: 7 })));
+$("#reset").addEventListener("click", (e) => { if (confirm("Reset the demo deal?")) act(e.currentTarget, () => api("POST", "/deal/reset")); });
+document.querySelectorAll(".roles button").forEach((b) => b.addEventListener("click", () => setRole(b.dataset.role)));
+
+async function refresh(force) {
+  try {
+    const d = await api("GET", "/deal");
+    deal = d && d.deal_id ? d : null;
+    render(force);
+  } catch {}
+}
+
+api("GET", "/policy").then((p) => {
+  $("#policy").innerHTML = Object.entries(p).map(([k, v]) => `<li><b>${k}</b> ${esc(v)}</li>`).join("");
+});
+setRole(role);
+refresh(true);
+setInterval(() => { if (!busy) refresh(false); }, 2000);
+</script>
+</body>
+</html>
