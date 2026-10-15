@@ -6,7 +6,7 @@
 <title>GuarantorAI | Escrow agent</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f9f77'/%3E%3Cpath d='M16 6l8 3v6c0 5-3.4 8.8-8 11-4.6-2.2-8-6-8-11V9l8-3z' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M12 15.5l3 3 5-6' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #eef6f1; --surface: #ffffff; --surface-2: #f6fbf8; --ink: #0f1222; --ink-2: #3a3f55; --muted: #737a91;
@@ -16,21 +16,37 @@
     --ok: #0b8a5f; --ok-soft: #ddf3e8; --warn: #b45309; --warn-soft: #fef5e7;
     --bad: #c62828; --bad-soft: #fdeeee; --frozen: #1d6fd1; --frozen-soft: #e8f1fc;
     --radius: 12px; --shadow: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
+    --topbar: rgba(255,255,255,.85); --env-line: #f8e1bd; --hover-line: #c9dcd1; --danger-line: #f1c6c6;
+    --client-line: #d5e3ff; --contractor-line: #fbd9c3; --frozen-line: #b9d3f3; --paid-line: #bfe3cf;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0c1512; --surface: #121e1a; --surface-2: #0f1916; --ink: #e6f2ec; --ink-2: #b9cbc2; --muted: #7f958b;
+    --line: #22332c; --line-2: #1a2924;
+    --brand: #2fc795; --brand-2: #5fe0b4; --brand-soft: #143229;
+    --client: #5b8def; --client-soft: #152338; --contractor: #ef8a54; --contractor-soft: #33211a;
+    --ok: #3ccf8e; --ok-soft: #13301f; --warn: #f0b252; --warn-soft: #33270f;
+    --bad: #f07272; --bad-soft: #3a1a1a; --frozen: #6ea8f5; --frozen-soft: #152a45;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.25);
+    --topbar: rgba(18,30,26,.85); --env-line: #5a4417; --hover-line: #2e463c; --danger-line: #5a2a2a;
+    --client-line: #253a5c; --contractor-line: #55331f; --frozen-line: #26446b; --paid-line: #1f4d36;
+    color-scheme: dark;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 14px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
+  h1, h2, .brand-name, .stat .v, .clause-h .amt, .deal-title { font-family: "Space Grotesk", Manrope, sans-serif; }
+  body { transition: background .2s, color .2s; }
+  body { margin: 0; font: 14px/1.5 Manrope, system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
   a { color: var(--brand); text-decoration: none; } a:hover { text-decoration: underline; }
   .mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; }
   svg.i { width: 16px; height: 16px; flex: none; vertical-align: -3px; }
 
   /* top bar */
-  .topbar { background: rgba(255,255,255,.85); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+  .topbar { background: var(--topbar); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
   .topbar-inner { max-width: 1380px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
   .brand { display: flex; align-items: center; gap: 10px; }
   .brand-mark { width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); display: grid; place-items: center; box-shadow: 0 2px 8px rgba(15,159,119,.35); }
   .brand-name { font-weight: 700; font-size: 17px; letter-spacing: -.01em; }
   .brand-sub { font-size: 12px; color: var(--muted); }
-  .env { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--warn); background: var(--warn-soft); border: 1px solid #f8e1bd; padding: 3px 10px; border-radius: 99px; }
+  .env { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--warn); background: var(--warn-soft); border: 1px solid var(--env-line); padding: 3px 10px; border-radius: 99px; }
   .env::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
   .spacer { flex: 1; }
   .seg { display: flex; background: var(--brand-soft); border-radius: 10px; padding: 3px; gap: 3px; }
@@ -61,12 +77,12 @@
   .card-b { padding: 16px 18px; }
 
   button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 8px 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 7px; transition: background .12s, border-color .12s; }
-  button:hover:not(:disabled) { border-color: #cfd3dd; background: var(--surface-2); }
+  button:hover:not(:disabled) { border-color: var(--hover-line); background: var(--surface-2); }
   button.primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
   button.primary:hover:not(:disabled) { background: #0b7f5f; }
   button.good { background: var(--ok); border-color: var(--ok); color: #fff; font-weight: 600; }
   button.good:hover:not(:disabled) { background: #0b7f47; }
-  button.danger { color: var(--bad); border-color: #f1c6c6; }
+  button.danger { color: var(--bad); border-color: var(--danger-line); }
   button.danger:hover:not(:disabled) { background: var(--bad-soft); }
   button.ghost { border-color: transparent; background: transparent; color: var(--muted); }
   button.small { padding: 5px 10px; font-size: 13px; }
@@ -102,7 +118,7 @@
   .badge.frozen { background: var(--frozen-soft); color: var(--frozen); }
 
   .clause { border: 1px solid var(--line); border-radius: 10px; margin-top: 12px; overflow: hidden; }
-  .clause.frozen { border-color: #b9d3f3; } .clause.paid { border-color: #bfe3cf; }
+  .clause.frozen { border-color: var(--frozen-line); } .clause.paid { border-color: var(--paid-line); }
   .clause-h { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
   .cid { font-family: "JetBrains Mono", monospace; font-size: 12px; font-weight: 600; color: var(--brand); background: var(--brand-soft); border-radius: 6px; padding: 2px 7px; }
   .clause-h .name { font-weight: 600; flex: 1; }
@@ -131,8 +147,8 @@
   .msg .bubble { padding: 9px 12px; border-radius: 10px; font-size: 13px; white-space: pre-wrap; background: var(--surface); border: 1px solid var(--line); }
   .msg .from { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 2px; }
   .msg.me { align-self: flex-end; flex-direction: row-reverse; }
-  .msg.client .bubble { background: var(--client-soft); border-color: #d5e3ff; }
-  .msg.contractor .bubble { background: var(--contractor-soft); border-color: #fbd9c3; }
+  .msg.client .bubble { background: var(--client-soft); border-color: var(--client-line); }
+  .msg.contractor .bubble { background: var(--contractor-soft); border-color: var(--contractor-line); }
   .chat-f { padding: 12px 18px; border-top: 1px solid var(--line-2); }
   .empty { margin: auto; text-align: center; color: var(--muted); font-size: 13px; max-width: 280px; }
 
@@ -155,9 +171,9 @@
   .foot-inner { max-width: 1380px; margin: 0 auto; padding: 16px 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
   .foot nav { display: flex; gap: 18px; }
   .foot a { color: var(--ink-2); font-weight: 500; }
-  dialog#policydlg { border: 1px solid var(--line); border-radius: var(--radius); padding: 0; width: min(680px, calc(100vw - 32px)); box-shadow: 0 20px 50px rgba(16,24,40,.2); color: var(--ink); }
+  dialog#policydlg { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0; width: min(680px, calc(100vw - 32px)); box-shadow: 0 20px 50px rgba(16,24,40,.2); color: var(--ink); }
   dialog#policydlg::backdrop { background: rgba(15,18,34,.4); }
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(8px); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; opacity: 0; transition: all .2s; pointer-events: none; max-width: 90vw; z-index: 10; display: flex; gap: 8px; align-items: center; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(8px); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 13px; opacity: 0; transition: all .2s; pointer-events: none; max-width: 90vw; z-index: 10; display: flex; gap: 8px; align-items: center; }
   .toast.show { opacity: 1; transform: translateX(-50%); }
   .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: s .7s linear infinite; }
   @keyframes s { to { transform: rotate(360deg); } }
@@ -177,6 +193,7 @@
     </div>
     <span class="env">Stripe test mode</span>
     <div class="spacer"></div>
+    <button class="small ghost" id="themebtn" title="Toggle dark theme" aria-label="Toggle dark theme"></button>
     <div class="seg" id="roles">
       <button data-role="client"><span class="avatar client">A</span><span class="lbl">Alice<small>Client</small></span></button>
       <button data-role="contractor"><span class="avatar contractor">B</span><span class="lbl">Bob<small>Contractor</small></span></button>
@@ -260,6 +277,8 @@ const ICONS = {
   ext: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
   sparkle: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/>',
   flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
 };
 const icon = (n, cls = "i") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ""}</svg>`;
 document.querySelectorAll("[data-icon]").forEach((el) => (el.outerHTML = icon(el.dataset.icon)));
@@ -517,6 +536,13 @@ $("#chatform").addEventListener("submit", (e) => {
     await api("POST", "/chat", { role, message: text });
   });
 });
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  localStorageSet("theme", t);
+  $("#themebtn").innerHTML = icon(t === "dark" ? "sun" : "moon");
+}
+setTheme(localStorageGet("theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+$("#themebtn").addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
 $("#policylink").addEventListener("click", (e) => { e.preventDefault(); $("#policydlg").showModal(); });
 $("#policyclose").addEventListener("click", () => $("#policydlg").close());
 $("#policydlg").addEventListener("click", (e) => { if (e.target.id === "policydlg") e.target.close(); });
