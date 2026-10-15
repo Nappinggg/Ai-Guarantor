@@ -1,10 +1,13 @@
 """Checkable evidence: is the PR merged, and did CI pass?"""
 import os
 import re
+import time
 
 import httpx
 
 PR_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/pull/(\d+)")
+CACHE_TTL = 60  # seconds; keeps demo re-runs well under GitHub's unauthenticated rate limit
+_cache: dict[str, tuple[float, dict]] = {}
 
 
 def _headers() -> dict:
@@ -15,6 +18,16 @@ def _headers() -> dict:
 
 
 def check_pr(url: str) -> dict:
+    m = PR_RE.search(url or "")
+    if m and m.group(0) in _cache and time.time() - _cache[m.group(0)][0] < CACHE_TTL:
+        return _cache[m.group(0)][1]
+    result = _fetch_pr(url)
+    if m and result["ok"]:
+        _cache[m.group(0)] = (time.time(), result)
+    return result
+
+
+def _fetch_pr(url: str) -> dict:
     m = PR_RE.search(url or "")
     if not m:
         return {"ok": False, "error": "Not a GitHub pull request URL"}
