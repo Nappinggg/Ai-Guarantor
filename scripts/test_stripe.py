@@ -29,7 +29,7 @@ def create_contractor_account(country: str, currency: str) -> str:
     """Accounts v2 recipient (can receive transfers). Stripe collects KYC and covers losses."""
     acct = client.v2.core.accounts.create({
         "display_name": "Bob Dev",
-        "contact_email": "bob.dev@example.com",
+        "contact_email": f"bob.dev+{int(time.time())}@example.com",
         "dashboard": "full",
         "identity": {"country": country.lower(), "entity_type": "individual"},
         "configuration": {
@@ -49,7 +49,10 @@ def create_contractor_account(country: str, currency: str) -> str:
 
 def transfers_status(account_id: str) -> str:
     acct = client.v2.core.accounts.retrieve(account_id, {"include": ["configuration.recipient"]})
-    return acct.configuration.recipient.capabilities.stripe_balance.stripe_transfers.status
+    if acct.configuration and acct.configuration.recipient:
+        return acct.configuration.recipient.capabilities.stripe_balance.stripe_transfers.status
+    # Accounts created in the Dashboard (v1): read the classic capability
+    return stripe.Account.retrieve(account_id).to_dict()["capabilities"].get("transfers")
 
 
 def onboarding_link(account_id: str) -> str:
