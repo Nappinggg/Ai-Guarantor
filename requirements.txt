@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+stripe
+litellm
+httpx
+python-dotenv
