@@ -3,121 +3,211 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Guarantor</title>
+<title>Guarantor | Escrow agent</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234338ca'/%3E%3Cpath d='M16 6l8 3v6c0 5-3.4 8.8-8 11-4.6-2.2-8-6-8-11V9l8-3z' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M12 15.5l3 3 5-6' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f6f7fb; --card: #fff; --ink: #14161f; --muted: #6b7083; --line: #e3e5ee;
-    --accent: #635bff; --client: #0a7cff; --contractor: #e8590c;
-    --ok: #12a150; --warn: #c27c00; --bad: #d92d20; --frozen: #3d7fd6;
+    --bg: #f5f6f8; --surface: #ffffff; --surface-2: #fafbfc; --ink: #0f1222; --ink-2: #3a3f55; --muted: #737a91;
+    --line: #e6e8ee; --line-2: #eff1f5;
+    --brand: #4338ca; --brand-2: #6366f1; --brand-soft: #eef0ff;
+    --client: #2563eb; --client-soft: #eaf1ff; --contractor: #c2410c; --contractor-soft: #fff1e8;
+    --ok: #0f9d58; --ok-soft: #e7f6ee; --warn: #b45309; --warn-soft: #fef5e7;
+    --bad: #c62828; --bad-soft: #fdeeee; --frozen: #1d6fd1; --frozen-soft: #e8f1fc;
+    --radius: 12px; --shadow: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
-  header { display: flex; align-items: center; gap: 16px; padding: 12px 20px; background: var(--card); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; flex-wrap: wrap; }
-  header h1 { font-size: 18px; margin: 0; }
-  header h1 span { color: var(--accent); }
-  .sub { color: var(--muted); font-size: 12px; }
-  .roles { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-left: auto; }
-  .roles button { border: 0; border-radius: 0; background: #fff; color: var(--muted); padding: 8px 16px; font-weight: 600; }
-  .roles button.on[data-role=client] { background: var(--client); color: #fff; }
-  .roles button.on[data-role=contractor] { background: var(--contractor); color: #fff; }
-  main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; padding: 16px 20px; max-width: 1400px; margin: 0 auto; }
-  @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 12px 16px; } }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; }
-  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 7px 12px; }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  body { margin: 0; font: 14px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
+  a { color: var(--brand); text-decoration: none; } a:hover { text-decoration: underline; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; }
+  svg.i { width: 16px; height: 16px; flex: none; vertical-align: -3px; }
+
+  /* top bar */
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+  .topbar-inner { max-width: 1380px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark { width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); display: grid; place-items: center; box-shadow: 0 2px 6px rgba(67,56,202,.35); }
+  .brand-name { font-weight: 700; font-size: 17px; letter-spacing: -.01em; }
+  .brand-sub { font-size: 12px; color: var(--muted); }
+  .env { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--warn); background: var(--warn-soft); border: 1px solid #f8e1bd; padding: 3px 10px; border-radius: 99px; }
+  .env::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
+  .spacer { flex: 1; }
+  .seg { display: flex; background: var(--line-2); border-radius: 10px; padding: 3px; gap: 3px; }
+  .seg button { border: 0; background: transparent; padding: 6px 12px 6px 6px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--muted); }
+  .seg button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+  .avatar { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; }
+  .avatar.client { background: var(--client); } .avatar.contractor { background: var(--contractor); }
+  .seg small { display: block; font-weight: 500; font-size: 11px; color: var(--muted); line-height: 1.1; }
+  .seg span.lbl { text-align: left; line-height: 1.15; }
+
+  /* stepper */
+  .stepper { max-width: 1380px; margin: 0 auto; padding: 18px 24px 0; display: flex; gap: 0; }
+  .step { flex: 1; display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; font-weight: 500; }
+  .step .dot { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); display: grid; place-items: center; font-size: 11px; font-weight: 700; flex: none; }
+  .step .bar { flex: 1; height: 2px; background: var(--line); margin-right: 10px; }
+  .step:last-child .bar { display: none; }
+  .step.done { color: var(--ink-2); } .step.done .dot { background: var(--brand); border-color: var(--brand); color: #fff; } .step.done .bar { background: var(--brand); }
+  .step.now { color: var(--ink); font-weight: 600; } .step.now .dot { border-color: var(--brand); color: var(--brand); }
+  @media (max-width: 720px) { .step .lbl { display: none; } }
+
+  main { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px; padding: 18px 24px 40px; max-width: 1380px; margin: 0 auto; }
+  @media (max-width: 960px) { main { grid-template-columns: 1fr; padding: 14px 16px; } .topbar-inner, .stepper { padding-left: 16px; padding-right: 16px; } }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 18px; }
+  .card-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line-2); }
+  .card-h h2 { margin: 0; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .card-h .hint { font-size: 12px; color: var(--muted); }
+  .card-b { padding: 16px 18px; }
+
+  button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 8px 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 7px; transition: background .12s, border-color .12s; }
+  button:hover:not(:disabled) { border-color: #cfd3dd; background: var(--surface-2); }
+  button.primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+  button.primary:hover:not(:disabled) { background: #3730a3; }
   button.good { background: var(--ok); border-color: var(--ok); color: #fff; font-weight: 600; }
-  button.bad { background: #fff; border-color: var(--bad); color: var(--bad); font-weight: 600; }
-  button.small { padding: 4px 9px; font-size: 12px; }
-  button:disabled { opacity: .5; cursor: not-allowed; }
-  textarea, input { font: inherit; width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fff; color: var(--ink); }
-  textarea { min-height: 70px; resize: vertical; }
+  button.good:hover:not(:disabled) { background: #0b7f47; }
+  button.danger { color: var(--bad); border-color: #f1c6c6; }
+  button.danger:hover:not(:disabled) { background: var(--bad-soft); }
+  button.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+  button.small { padding: 5px 10px; font-size: 13px; }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  textarea, input { font: inherit; width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); color: var(--ink); outline: none; }
+  textarea:focus, input:focus { border-color: var(--brand-2); box-shadow: 0 0 0 3px var(--brand-soft); }
+  textarea { min-height: 84px; resize: vertical; }
   .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .grow { flex: 1; min-width: 160px; }
-  .deal-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .deal-head .title { font-size: 18px; font-weight: 700; }
-  .money { display: flex; gap: 18px; margin-top: 8px; flex-wrap: wrap; }
-  .money div { font-size: 12px; color: var(--muted); }
-  .money b { display: block; font-size: 18px; color: var(--ink); }
-  .pill { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 12px; font-weight: 600; background: #eef0f6; color: var(--muted); }
-  .pill.draft { background: #f1f1f4; } .pill.approved { background: #ece9ff; color: var(--accent); }
-  .pill.funded, .pill.verified { background: #fff4dc; color: var(--warn); }
-  .pill.completed, .pill.paid { background: #dcf5e6; color: var(--ok); }
-  .pill.frozen { background: #e1ecfb; color: var(--frozen); }
-  .pill.pending, .pill.submitted { background: #f1f1f4; color: var(--muted); }
-  .clause { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-top: 10px; }
-  .clause.frozen { border-color: var(--frozen); background: #f5f9ff; }
-  .clause.paid { border-color: #bfe8cf; background: #f6fdf8; }
-  .clause .top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
-  .clause .name { font-weight: 700; }
-  .clause .amt { font-size: 18px; font-weight: 700; }
-  .ev { font-size: 12px; color: var(--muted); margin: 4px 0 8px; }
-  .summary { background: #f7f7fb; border-left: 3px solid var(--accent); padding: 8px 10px; border-radius: 6px; margin: 8px 0; font-size: 13px; }
-  .facts { font-size: 12px; color: var(--muted); }
-  .approvals { display: flex; gap: 10px; margin: 8px 0; font-size: 13px; }
-  .who-client { color: var(--client); font-weight: 600; } .who-contractor { color: var(--contractor); font-weight: 600; }
-  .policy li { margin: 3px 0; font-size: 13px; } .policy b { color: var(--accent); }
-  .policy ul { padding-left: 18px; margin: 0; }
-  #log { max-height: 46vh; overflow: auto; display: flex; flex-direction: column-reverse; }
-  .ev-item { border-left: 3px solid var(--line); padding: 6px 10px; margin: 4px 0; font-size: 13px; }
-  .ev-item .meta { font-size: 11px; color: var(--muted); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-  .ev-item.PAYOUT { border-color: var(--ok); background: #f6fdf8; }
-  .ev-item.FROZEN, .ev-item.DISPUTED { border-color: var(--frozen); background: #f5f9ff; }
-  .ev-item.RELEASE_REFUSED, .ev-item.EVIDENCE_REJECTED, .ev-item.PAYOUT_FAILED { border-color: var(--bad); background: #fff6f5; }
-  .ev-item.FUNDED, .ev-item.CONTRACT_LOCKED, .ev-item.EVIDENCE_VERIFIED { border-color: var(--accent); }
-  .rule { background: var(--accent); color: #fff; border-radius: 5px; padding: 0 6px; font-weight: 700; font-size: 11px; }
-  .type { font-weight: 700; color: var(--ink); }
-  a.stripe { color: var(--accent); font-family: ui-monospace, monospace; font-size: 11px; }
-  #chatlog { max-height: 34vh; overflow: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-  .msg { padding: 8px 11px; border-radius: 10px; max-width: 88%; font-size: 13px; white-space: pre-wrap; }
-  .msg.client { background: #e7f1ff; align-self: flex-end; }
-  .msg.contractor { background: #fff0e6; align-self: flex-end; }
-  .msg.agent { background: #f1f0ff; border: 1px solid #dcd9ff; align-self: flex-start; }
-  .msg .from { font-size: 11px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 2px; }
+  .grow { flex: 1; min-width: 180px; }
   .hint { color: var(--muted); font-size: 12px; }
-  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; z-index: 10; }
-  .toast.show { opacity: 1; }
-  .spin { display: inline-block; width: 12px; height: 12px; border: 2px solid #fff; border-right-color: transparent; border-radius: 50%; animation: s .7s linear infinite; vertical-align: -2px; }
+  label.f { display: block; font-size: 12px; font-weight: 600; color: var(--ink-2); margin-bottom: 6px; }
+
+  /* deal */
+  .deal-title { font-size: 20px; font-weight: 700; letter-spacing: -.01em; margin: 0; }
+  .parties { display: flex; gap: 14px; align-items: center; margin-top: 6px; font-size: 13px; color: var(--ink-2); flex-wrap: wrap; }
+  .party { display: inline-flex; align-items: center; gap: 6px; }
+  .party .avatar { width: 20px; height: 20px; font-size: 10px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 10px; margin-top: 14px; overflow: hidden; }
+  .stat { padding: 12px 14px; border-right: 1px solid var(--line); }
+  .stat:last-child { border-right: 0; }
+  .stat .k { font-size: 12px; color: var(--muted); }
+  .stat .v { font-size: 20px; font-weight: 700; letter-spacing: -.01em; margin-top: 2px; }
+  .terms { margin-top: 12px; font-size: 13px; color: var(--muted); background: var(--surface-2); border: 1px dashed var(--line); border-radius: 8px; padding: 8px 12px; }
+  .stage { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: var(--brand-soft); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .approvals { display: flex; gap: 16px; font-size: 13px; }
+  .approvals span { display: inline-flex; align-items: center; gap: 6px; }
+
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 99px; font-size: 12px; font-weight: 600; background: var(--line-2); color: var(--muted); text-transform: capitalize; }
+  .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .badge.approved { background: var(--brand-soft); color: var(--brand); }
+  .badge.funded, .badge.verified { background: var(--warn-soft); color: var(--warn); }
+  .badge.completed, .badge.paid { background: var(--ok-soft); color: var(--ok); }
+  .badge.frozen { background: var(--frozen-soft); color: var(--frozen); }
+
+  .clause { border: 1px solid var(--line); border-radius: 10px; margin-top: 12px; overflow: hidden; }
+  .clause.frozen { border-color: #b9d3f3; } .clause.paid { border-color: #bfe3cf; }
+  .clause-h { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+  .cid { font-family: "JetBrains Mono", monospace; font-size: 12px; font-weight: 600; color: var(--brand); background: var(--brand-soft); border-radius: 6px; padding: 2px 7px; }
+  .clause-h .name { font-weight: 600; flex: 1; }
+  .clause-h .amt { font-weight: 700; font-size: 16px; }
+  .clause-meta { padding: 0 14px 12px; font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
+  .clause-meta span { display: inline-flex; align-items: center; gap: 5px; }
+  .evidence { margin: 0 14px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+  .evidence .facts { padding: 8px 12px; font-size: 12px; color: var(--ink-2); display: flex; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
+  .evidence .facts b { font-weight: 600; }
+  .evidence .sum { padding: 10px 12px; font-size: 13px; }
+  .evidence .sum .lbl { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--brand); display: block; margin-bottom: 3px; }
+  .clause-a { padding: 10px 14px; background: var(--surface-2); border-top: 1px solid var(--line); }
+  .ok-t { color: var(--ok); } .bad-t { color: var(--bad); }
+
+  /* policy */
+  .policy { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; }
+  @media (max-width: 600px) { .policy { grid-template-columns: 1fr; } }
+  .policy div { font-size: 13px; color: var(--ink-2); display: flex; gap: 10px; }
+  .rule { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 600; color: #fff; background: var(--brand); border-radius: 5px; padding: 1px 6px; height: fit-content; }
+
+  /* chat */
+  #chatlog { height: 300px; overflow: auto; display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; background: var(--surface-2); }
+  .msg { display: flex; gap: 10px; max-width: 92%; }
+  .msg .avatar { width: 28px; height: 28px; font-size: 11px; flex: none; }
+  .avatar.agent { background: linear-gradient(135deg, var(--brand), var(--brand-2)); }
+  .msg .bubble { padding: 9px 12px; border-radius: 10px; font-size: 13px; white-space: pre-wrap; background: var(--surface); border: 1px solid var(--line); }
+  .msg .from { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 2px; }
+  .msg.me { align-self: flex-end; flex-direction: row-reverse; }
+  .msg.client .bubble { background: var(--client-soft); border-color: #d5e3ff; }
+  .msg.contractor .bubble { background: var(--contractor-soft); border-color: #fbd9c3; }
+  .chat-f { padding: 12px 18px; border-top: 1px solid var(--line-2); }
+  .empty { margin: auto; text-align: center; color: var(--muted); font-size: 13px; max-width: 280px; }
+
+  /* audit log */
+  #log { max-height: 420px; overflow: auto; padding: 6px 18px 12px; }
+  .ev { position: relative; padding: 10px 0 10px 22px; border-bottom: 1px solid var(--line-2); font-size: 13px; }
+  .ev:last-child { border-bottom: 0; }
+  .ev::before { content: ""; position: absolute; left: 2px; top: 16px; width: 9px; height: 9px; border-radius: 50%; background: var(--line); box-shadow: 0 0 0 3px var(--surface); }
+  .ev.PAYOUT::before, .ev.DEAL_COMPLETED::before { background: var(--ok); }
+  .ev.FROZEN::before, .ev.DISPUTED::before, .ev.UNFROZEN::before { background: var(--frozen); }
+  .ev.RELEASE_REFUSED::before, .ev.EVIDENCE_REJECTED::before, .ev.PAYOUT_FAILED::before { background: var(--bad); }
+  .ev.FUNDED::before, .ev.CONTRACT_LOCKED::before, .ev.EVIDENCE_VERIFIED::before { background: var(--brand); }
+  .ev .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+  .ev .type { font-weight: 600; color: var(--ink); font-size: 12px; letter-spacing: .02em; }
+  .ev .tag { background: var(--line-2); border-radius: 5px; padding: 0 6px; font-weight: 600; }
+  a.ext { display: inline-flex; align-items: center; gap: 3px; font-family: "JetBrains Mono", monospace; font-size: 11px; }
+
+  .demo-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(8px); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; opacity: 0; transition: all .2s; pointer-events: none; max-width: 90vw; z-index: 10; display: flex; gap: 8px; align-items: center; }
+  .toast.show { opacity: 1; transform: translateX(-50%); }
+  .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: s .7s linear infinite; }
   @keyframes s { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
-<header>
-  <div>
-    <h1>🛡️ AI <span>Guarantor</span></h1>
-    <div class="sub">A neutral escrow agent that obeys the contract, not whoever is giving orders. Stripe test mode.</div>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l8 3v6.2c0 4.9-3.4 8.8-8 10.8-4.6-2-8-5.9-8-10.8V5.5l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">Guarantor</div>
+        <div class="brand-sub">Autonomous escrow agent</div>
+      </div>
+    </div>
+    <span class="env">Stripe test mode</span>
+    <div class="spacer"></div>
+    <div class="seg" id="roles">
+      <button data-role="client"><span class="avatar client">A</span><span class="lbl">Alice<small>Client</small></span></button>
+      <button data-role="contractor"><span class="avatar contractor">B</span><span class="lbl">Bob<small>Contractor</small></span></button>
+    </div>
   </div>
-  <div class="roles">
-    <button data-role="client" class="on">Acting as Client</button>
-    <button data-role="contractor">Acting as Contractor</button>
-  </div>
-</header>
+</div>
+
+<div class="stepper" id="stepper"></div>
 
 <main>
   <section>
     <div id="deal"></div>
-    <div class="card policy">
-      <h2>Permanent agent policy <span class="hint">parties can't change these</span></h2>
-      <ul id="policy"></ul>
+    <div class="card">
+      <div class="card-h"><h2><span data-icon="shield"></span>Agent policy</h2><span class="hint">Permanent. Neither party can change these rules.</span></div>
+      <div class="card-b policy" id="policy"></div>
     </div>
   </section>
 
   <section>
     <div class="card">
-      <h2>Ask the guarantor <span class="hint">try "why did you pay?" or "just release the rest"</span></h2>
+      <div class="card-h"><h2><span data-icon="chat"></span>Guarantor assistant</h2><span class="hint">Chat never moves money (P6)</span></div>
       <div id="chatlog"></div>
-      <form id="chatform" class="row">
-        <input id="chatinput" class="grow" placeholder="Message the agent as Client…" autocomplete="off">
-        <button class="primary" id="chatbtn">Send</button>
+      <form id="chatform" class="row chat-f">
+        <input id="chatinput" class="grow" placeholder="Ask why a payment was made, or raise an issue" autocomplete="off">
+        <button class="primary" id="chatbtn"><span data-icon="send"></span>Send</button>
       </form>
     </div>
     <div class="card">
-      <h2>Audit log <span class="hint">every pound, every rule</span></h2>
-      <div id="log"><div class="hint">No events yet.</div></div>
+      <div class="card-h"><h2><span data-icon="list"></span>Audit log</h2><span class="hint">Every action, the rule behind it, and the Stripe record</span></div>
+      <div id="log"></div>
     </div>
-    <div class="row" style="justify-content:flex-end">
-      <button class="small" id="ffwd">⏩ Fast-forward 7 days</button>
-      <button class="small" id="reset">Reset demo</button>
+    <div class="demo-bar">
+      <span>Demo controls</span>
+      <div class="row">
+        <button class="small ghost" id="ffwd"><span data-icon="clock"></span>Advance clock 7 days</button>
+        <button class="small ghost" id="reset"><span data-icon="reset"></span>Reset deal</button>
+      </div>
     </div>
   </section>
 </main>
@@ -129,7 +219,6 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const gbp = (p) => "£" + (p / 100).toFixed(2);
 let role = localStorageGet("role") || "client";
 let deal = null;
-let chat = [];
 let busy = false;
 let lastRender = "";
 let stripeAcct = null;
@@ -137,9 +226,34 @@ let stripeAcct = null;
 function localStorageGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 function localStorageSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
 
-function toast(text) {
-  const t = $("#toast"); t.textContent = text; t.classList.add("show");
-  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 3500);
+const ICONS = {
+  shield: '<path d="M12 2.5l8 3v6.2c0 4.9-3.4 8.8-8 10.8-4.6-2-8-5.9-8-10.8V5.5l8-3z"/>',
+  chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/>',
+  send: '<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  reset: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  card: '<rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19"/>',
+  bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>',
+  git: '<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="8" r="2.5"/><path d="M6 8.5v7M18 10.5c0 4-6 3-11.2 5.6"/>',
+  file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/><path d="M14 3v5h5"/>',
+  timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4M9 2h6"/>',
+  pause: '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>',
+  ext: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  sparkle: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/>',
+  flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+};
+const icon = (n, cls = "i") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ""}</svg>`;
+document.querySelectorAll("[data-icon]").forEach((el) => (el.outerHTML = icon(el.dataset.icon)));
+
+function toast(text, kind) {
+  const t = $("#toast");
+  t.innerHTML = (kind ? icon(kind === "ok" ? "check" : "x") : "") + esc(text);
+  t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 3800);
 }
 
 async function api(method, path, body) {
@@ -153,8 +267,8 @@ async function act(btn, fn) {
   if (busy) return;
   busy = true;
   const label = btn?.innerHTML;
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin"></span> ' + label; }
-  try { await fn(); } catch (e) { toast(e.message); }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin"></span>' + btn.textContent.trim(); }
+  try { await fn(); } catch (e) { toast(e.message, "bad"); }
   finally { busy = false; if (btn) { btn.disabled = false; btn.innerHTML = label; } await refresh(true); }
 }
 
@@ -162,25 +276,47 @@ function stripeLink(id) {
   if (!id) return "";
   const path = id.startsWith("tr_") ? "connect/transfers/" : "payments/";
   const base = stripeAcct ? `https://dashboard.stripe.com/${stripeAcct}/test/` : "https://dashboard.stripe.com/test/";
-  return `<a class="stripe" target="_blank" href="${base}${path}${esc(id)}">${esc(id)} ↗</a>`;
+  return `<a class="ext" target="_blank" href="${base}${path}${esc(id)}">${esc(id.slice(0, 18))}…${icon("ext")}</a>`;
 }
+
+const PEOPLE = { client: { initial: "A", name: "Alice", role: "Client" }, contractor: { initial: "B", name: "Bob", role: "Contractor" } };
 
 function setRole(r) {
   role = r; localStorageSet("role", r);
-  document.querySelectorAll(".roles button").forEach((b) => b.classList.toggle("on", b.dataset.role === r));
-  $("#chatinput").placeholder = `Message the agent as ${r === "client" ? "Client" : "Contractor"}…`;
+  document.querySelectorAll("#roles button").forEach((b) => b.classList.toggle("on", b.dataset.role === r));
   render(true);
+}
+
+/* ---------- stepper ---------- */
+
+function renderStepper() {
+  const s = deal?.status;
+  const anyVerified = deal?.clauses.some((c) => ["verified", "paid", "frozen"].includes(c.status));
+  const done = [
+    !!deal,
+    ["approved", "funded", "completed"].includes(s),
+    ["funded", "completed"].includes(s),
+    !!anyVerified,
+    s === "completed",
+  ];
+  const labels = ["Contract drafted", "Both parties approved", "Funds in escrow", "Delivery verified", "All funds released"];
+  const nowIdx = done.indexOf(false);
+  return labels.map((l, i) => `<div class="step ${done[i] ? "done" : i === nowIdx ? "now" : ""}">
+      <span class="dot">${done[i] ? icon("check") : i + 1}</span><span class="lbl">${l}</span><span class="bar"></span></div>`).join("");
 }
 
 /* ---------- deal panel ---------- */
 
 function renderNoDeal() {
   return `<div class="card">
-    <h2>1 · Describe the deal in plain words</h2>
-    <textarea id="terms">Alice hires Bob to build a landing page website for £500: £250 after the homepage mockup is merged, £250 after the site launches.</textarea>
-    <div class="row" style="margin-top:8px">
-      <button class="primary" id="draftbtn">Draft contract</button>
-      <span class="hint">The AI turns this into clauses. Money rules stay deterministic.</span>
+    <div class="card-h"><h2>${icon("file")}New agreement</h2><span class="hint">Step 1 of 5</span></div>
+    <div class="card-b">
+      <label class="f" for="terms">Describe the deal in plain language</label>
+      <textarea id="terms">Alice hires Bob to build a landing page website for £500: £250 after the homepage mockup is merged, £250 after the site launches.</textarea>
+      <div class="row" style="margin-top:12px">
+        <button class="primary" id="draftbtn">${icon("sparkle")}Draft contract</button>
+        <span class="hint">The agent structures the terms into clauses. Payment decisions are made by fixed rules, not the AI.</span>
+      </div>
     </div></div>`;
 }
 
@@ -188,35 +324,45 @@ function clauseHtml(c) {
   const ef = c.evidence_found || {};
   const isClient = role === "client", isContractor = role === "contractor";
   const funded = ["funded", "completed"].includes(deal.status);
-  let body = "";
+  let evidence = "";
   if (ef.summary || ef.number) {
-    body += `<div class="summary">${ef.number ? `<div class="facts">PR <a target="_blank" href="${esc(ef.url)}">#${esc(ef.number)}</a> · ${esc(ef.title || "")} · merged: <b>${ef.merged ? "yes" : "no"}</b> · CI: <b>${esc(ef.ci)}</b>${ef.changed_files != null ? ` · ${ef.changed_files} files (+${ef.additions}/−${ef.deletions})` : ""}</div>` : ""}${ef.summary ? `<div>🤖 ${esc(ef.summary)}</div>` : ""}</div>`;
+    evidence = `<div class="evidence">
+      ${ef.number ? `<div class="facts">
+        <span>${icon("git")} <a target="_blank" href="${esc(ef.url)}">PR #${esc(ef.number)}</a> ${esc(ef.title || "")}</span>
+        <span>Merged: <b class="${ef.merged ? "ok-t" : "bad-t"}">${ef.merged ? "Yes" : "No"}</b></span>
+        <span>CI: <b>${esc(ef.ci)}</b></span>
+        ${ef.changed_files != null ? `<span>${ef.changed_files} files, +${ef.additions} / -${ef.deletions}</span>` : ""}
+      </div>` : ""}
+      ${ef.summary ? `<div class="sum"><span class="lbl">Agent summary</span>${esc(ef.summary)}</div>` : ""}
+    </div>`;
   }
   let actions = "";
-  if (funded && c.status !== "paid") {
-    if (c.status === "frozen") {
-      const voted = (c.resolve_votes || []).includes(role);
-      actions = `<span class="hint">❄️ Funds frozen (P4). Agreed to lift: ${(c.resolve_votes || []).join(", ") || "nobody yet"}</span>
-        <button class="small" data-act="resolve" data-c="${c.id}" ${voted ? "disabled" : ""}>${voted ? "You agreed" : "Agree to lift dispute"}</button>`;
-    } else {
-      if (isContractor && c.status !== "verified") {
-        actions += `<input class="grow" id="pr-${c.id}" placeholder="${c.evidence.type === "github_pr" ? "https://github.com/owner/repo/pull/1" : "Delivery note or link"}">
-          <button class="primary small" data-act="evidence" data-c="${c.id}">Submit evidence</button>`;
-      }
-      if (isClient && c.status === "verified") {
-        actions += `<button class="good" data-act="accept" data-c="${c.id}">✓ Accept & release ${gbp(c.amount)}</button>`;
-      }
-      actions += `<button class="bad small" data-act="dispute" data-c="${c.id}">Dispute</button>`;
-      if (isClient && c.status !== "verified") actions += `<span class="hint">Waiting for the contractor's evidence.</span>`;
-      if (isContractor && c.status === "verified") actions += `<span class="hint">Verified. Waiting for the client (auto-release in ${c.auto_release_days} days).</span>`;
+  if (c.status === "paid") {
+    actions = `<span class="row ok-t" style="font-weight:600">${icon("check")}Released to Bob ${stripeLink(c.transfer_id)}</span>`;
+  } else if (funded && c.status === "frozen") {
+    const voted = (c.resolve_votes || []).includes(role);
+    actions = `<span class="hint grow">${icon("pause")} Funds frozen under P4. Agreed to lift: ${(c.resolve_votes || []).map((r) => PEOPLE[r].name).join(", ") || "nobody yet"}.</span>
+      <button class="small" data-act="resolve" data-c="${c.id}" ${voted ? "disabled" : ""}>${voted ? "You agreed" : "Agree to lift dispute"}</button>`;
+  } else if (funded) {
+    if (isContractor && c.status !== "verified") {
+      actions += `<input class="grow" id="pr-${c.id}" placeholder="${c.evidence.type === "github_pr" ? "https://github.com/owner/repo/pull/1" : "Delivery note or link"}">
+        <button class="primary small" data-act="evidence" data-c="${c.id}">${icon("git")}Submit evidence</button>`;
     }
+    if (isClient && c.status === "verified") {
+      actions += `<button class="good" data-act="accept" data-c="${c.id}">${icon("check")}Accept and release ${gbp(c.amount)}</button>`;
+    }
+    if (isClient && c.status !== "verified") actions += `<span class="hint grow">Waiting for Bob to submit evidence.</span>`;
+    if (isContractor && c.status === "verified") actions += `<span class="hint grow">Evidence verified. Waiting for Alice, or auto-release in ${c.auto_release_days} days.</span>`;
+    actions += `<button class="danger small" data-act="dispute" data-c="${c.id}">${icon("flag")}Dispute</button>`;
   }
-  if (c.status === "paid") actions = `<span class="hint">✅ Released · ${stripeLink(c.transfer_id)}</span>`;
   return `<div class="clause ${c.status}">
-    <div class="top"><span class="name">${c.id} · ${esc(c.deliverable)}</span><span class="amt">${gbp(c.amount)}</span></div>
-    <div class="ev">Proof: ${esc(c.evidence.description)} · auto-release after ${c.auto_release_days} days of silence · <span class="pill ${c.status}">${c.status}</span></div>
-    ${body}
-    ${actions ? `<div class="row">${actions}</div>` : ""}
+    <div class="clause-h"><span class="cid">${c.id}</span><span class="name">${esc(c.deliverable)}</span><span class="badge ${c.status}">${c.status}</span><span class="amt">${gbp(c.amount)}</span></div>
+    <div class="clause-meta">
+      <span>${icon(c.evidence.type === "github_pr" ? "git" : "file")}Proof: ${esc(c.evidence.description)}</span>
+      <span>${icon("timer")}Auto-release after ${c.auto_release_days} days of silence</span>
+    </div>
+    ${evidence}
+    ${actions ? `<div class="clause-a row">${actions}</div>` : ""}
   </div>`;
 }
 
@@ -227,42 +373,51 @@ function renderDeal() {
   let stage = "";
   if (deal.status === "draft") {
     const mine = approved.includes(role);
-    stage = `<div class="approvals">
-        <span class="who-client">${approved.includes("client") ? "✅" : "⏳"} Client</span>
-        <span class="who-contractor">${approved.includes("contractor") ? "✅" : "⏳"} Contractor</span></div>
-      <div class="row"><button class="primary" id="approvebtn" ${mine ? "disabled" : ""}>${mine ? "You approved" : `Approve as ${role === "client" ? "Client" : "Contractor"}`}</button>
-      <span class="hint">Both must approve. Then the contract becomes the agent's rules (P5).</span></div>`;
+    const mark = (r) => approved.includes(r) ? `<span class="ok-t">${icon("check")}</span>` : `<span class="hint">${icon("clock")}</span>`;
+    stage = `<div class="stage">
+        <div class="approvals"><span>${mark("client")}Alice</span><span>${mark("contractor")}Bob</span></div>
+        <span class="hint grow">Both parties must approve. The contract then becomes the agent's rules (P5).</span>
+        <button class="primary" id="approvebtn" ${mine ? "disabled" : ""}>${icon("check")}${mine ? "Approved" : `Approve as ${PEOPLE[role].name}`}</button></div>`;
   } else if (deal.status === "approved") {
     stage = role === "client"
-      ? `<div class="row"><button class="primary" id="fundbtn">💳 Deposit ${gbp(deal.total)} with Stripe Checkout</button>
-           <button class="small" id="fundfast">Instant test deposit</button>
-           <span class="hint">Use test card <b>4000 0000 0000 0077</b></span></div>`
-      : `<span class="hint">Waiting for the client to deposit ${gbp(deal.total)}.</span>`;
+      ? `<div class="stage">
+          <span class="hint grow">${icon("lock")} Deposit the full amount. Funds are held by the guarantor, not paid to Bob.</span>
+          <button class="small" id="fundfast">${icon("bolt")}Instant test deposit</button>
+          <button class="primary" id="fundbtn">${icon("card")}Deposit ${gbp(deal.total)} via Stripe</button></div>`
+      : `<div class="stage"><span class="hint">${icon("clock")} Waiting for Alice to deposit ${gbp(deal.total)}.</span></div>`;
   }
   return `<div class="card">
-    <div class="deal-head">
-      <div><div class="title">${esc(deal.title)}</div>
-        <div class="sub"><span class="who-client">${esc(deal.client)}</span> (client) → <span class="who-contractor">${esc(deal.contractor)}</span> (contractor) · ${esc(deal.deal_id)}</div></div>
-      <span class="pill ${deal.status}">${deal.status}</span>
+    <div class="card-h"><h2>${icon("file")}Agreement</h2><span class="mono hint">${esc(deal.deal_id)}</span></div>
+    <div class="card-b">
+      <div class="row" style="justify-content:space-between">
+        <h1 class="deal-title">${esc(deal.title)}</h1><span class="badge ${deal.status}">${deal.status}</span>
+      </div>
+      <div class="parties">
+        <span class="party"><span class="avatar client">A</span>${esc(deal.client)}, client</span>
+        <span class="hint">pays</span>
+        <span class="party"><span class="avatar contractor">B</span>${esc(deal.contractor)}, contractor</span>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="k">Contract value</div><div class="v">${gbp(deal.total)}</div></div>
+        <div class="stat"><div class="k">Held in escrow</div><div class="v">${gbp(held)}</div></div>
+        <div class="stat"><div class="k">Released</div><div class="v">${gbp(paid)}</div></div>
+      </div>
+      ${deal.deposit.payment_intent ? `<div class="hint" style="margin-top:8px">Deposit ${stripeLink(deal.deposit.payment_intent)}</div>` : ""}
+      <div class="terms">Original terms: “${esc(deal.terms)}”</div>
+      ${stage}
+      ${deal.clauses.map(clauseHtml).join("")}
     </div>
-    <div class="money">
-      <div>Contract total<b>${gbp(deal.total)}</b></div>
-      <div>Held in escrow<b>${gbp(held)}</b></div>
-      <div>Released<b>${gbp(paid)}</b></div>
-      ${deal.deposit.payment_intent ? `<div>Deposit<br>${stripeLink(deal.deposit.payment_intent)}</div>` : ""}
-    </div>
-    <div class="sub" style="margin-top:8px">Terms: “${esc(deal.terms)}”</div>
-    ${stage ? `<div style="margin-top:10px">${stage}</div>` : ""}
-    ${deal.clauses.map(clauseHtml).join("")}
   </div>`;
 }
 
 function renderLog() {
-  if (!deal || !deal.events.length) return '<div class="hint">No events yet.</div>';
-  return deal.events.filter((e) => !["CHAT", "CHAT_REPLY"].includes(e.type)).map((e) => `
-    <div class="ev-item ${e.type}">
-      <div class="meta"><span>${esc(e.ts)}</span><span class="type">${esc(e.type)}</span>
-        <span>${esc(e.actor)}</span>${e.clause ? `<span>${esc(e.clause)}</span>` : ""}
+  const evs = (deal?.events || []).filter((e) => !["CHAT", "CHAT_REPLY"].includes(e.type));
+  if (!evs.length) return '<div class="empty" style="padding:24px 0">No activity yet.</div>';
+  return evs.map((e) => `
+    <div class="ev ${e.type}">
+      <div class="meta"><span class="type">${esc(e.type.replace(/_/g, " "))}</span>
+        <span>${esc(e.ts.slice(11))}</span><span>${esc(PEOPLE[e.actor]?.name || e.actor)}</span>
+        ${e.clause ? `<span class="tag">${esc(e.clause)}</span>` : ""}
         ${e.rule ? `<span class="rule">${esc(e.rule)}</span>` : ""}${e.stripe_id ? stripeLink(e.stripe_id) : ""}</div>
       <div>${esc(e.detail)}</div>
     </div>`).reverse().join("");
@@ -270,25 +425,31 @@ function renderLog() {
 
 function renderChat() {
   const msgs = (deal?.events || []).filter((e) => e.type === "CHAT" || e.type === "CHAT_REPLY");
-  if (!msgs.length) return '<div class="hint">Both parties can talk to the agent here. Chat never moves money (P6).</div>';
+  if (!msgs.length) return `<div class="empty">${icon("chat")}<br>Both parties can ask the guarantor questions here, such as why a payment was made or refused.</div>`;
   return msgs.map((e) => {
     const who = e.type === "CHAT_REPLY" ? "agent" : e.actor;
-    const label = who === "agent" ? "🛡️ Guarantor" : who === "client" ? "Client" : "Contractor";
-    return `<div class="msg ${who}"><span class="from">${label} · ${esc(e.ts.slice(11))}</span>${esc(e.detail)}</div>`;
+    const p = who === "agent" ? { initial: "G", name: "Guarantor" } : PEOPLE[who];
+    const avatar = who === "agent"
+      ? `<span class="avatar agent"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${ICONS.shield}</svg></span>`
+      : `<span class="avatar ${who}">${p.initial}</span>`;
+    return `<div class="msg ${who} ${who === role ? "me" : ""}">${avatar}
+      <div><div class="from">${p.name} · ${esc(e.ts.slice(11, 16))}</div><div class="bubble">${esc(e.detail)}</div></div></div>`;
   }).join("");
 }
 
 function render(force) {
-  const key = JSON.stringify(deal) + role;
+  const key = JSON.stringify(deal) + role + stripeAcct;
   if (!force && key === lastRender) return;
-  if (document.activeElement && document.activeElement.id?.startsWith("pr-") && !force) return; // don't wipe typing
+  if (!force && document.activeElement && (document.activeElement.id?.startsWith("pr-") || document.activeElement.id === "terms")) return;
   lastRender = key;
   const typed = {};
   document.querySelectorAll("input[id^=pr-], #terms").forEach((i) => (typed[i.id] = i.value));
+  $("#stepper").innerHTML = renderStepper();
   $("#deal").innerHTML = deal ? renderDeal() : renderNoDeal();
   Object.entries(typed).forEach(([id, v]) => { const el = document.getElementById(id); if (el && v) el.value = v; });
   $("#log").innerHTML = renderLog();
   const cl = $("#chatlog"); cl.innerHTML = renderChat(); cl.scrollTop = cl.scrollHeight;
+  $("#chatinput").placeholder = `Message the guarantor as ${PEOPLE[role].name}`;
   bind();
 }
 
@@ -307,13 +468,14 @@ function bind() {
     act(e.currentTarget, async () => {
       if (a === "evidence") {
         const v = document.getElementById("pr-" + c).value.trim();
-        if (!v) throw new Error("Paste the PR link first");
+        if (!v) throw new Error("Paste the pull request link first");
         const d = await api("POST", `/clause/${c}/evidence`, { role, pr_url: v.startsWith("http") ? v : "", note: v });
         const last = d.events[d.events.length - 1];
-        toast(last.type === "EVIDENCE_REJECTED" ? "❌ " + last.detail : "✅ Evidence verified");
+        last.type === "EVIDENCE_REJECTED" ? toast(last.detail, "bad") : toast("Evidence verified", "ok");
       } else if (a === "accept") {
         const r = await api("POST", `/clause/${c}/accept`, { role });
-        toast(r.released ? "✅ Paid via Stripe transfer" : "❌ " + (r.error || r.checks?.find((x) => !x.ok)?.reason || "Refused"));
+        r.released ? toast("Released via Stripe transfer", "ok")
+          : toast(r.error || r.checks?.find((x) => !x.ok)?.reason || "Release refused", "bad");
       } else {
         await api("POST", `/clause/${c}/${a}`, { role });
       }
@@ -327,7 +489,7 @@ $("#chatform").addEventListener("submit", (e) => {
   e.preventDefault();
   const text = $("#chatinput").value.trim();
   if (!text) return;
-  if (!deal) return toast("Draft a contract first");
+  if (!deal) return toast("Draft an agreement first", "bad");
   act($("#chatbtn"), async () => {
     $("#chatinput").value = "";
     await api("POST", "/chat", { role, message: text });
@@ -335,7 +497,7 @@ $("#chatform").addEventListener("submit", (e) => {
 });
 $("#ffwd").addEventListener("click", (e) => act(e.currentTarget, () => api("POST", "/deal/fast_forward", { days: 7 })));
 $("#reset").addEventListener("click", (e) => { if (confirm("Reset the demo deal?")) act(e.currentTarget, () => api("POST", "/deal/reset")); });
-document.querySelectorAll(".roles button").forEach((b) => b.addEventListener("click", () => setRole(b.dataset.role)));
+document.querySelectorAll("#roles button").forEach((b) => b.addEventListener("click", () => setRole(b.dataset.role)));
 
 async function refresh(force) {
   try {
@@ -346,7 +508,7 @@ async function refresh(force) {
 }
 
 api("GET", "/policy").then((p) => {
-  $("#policy").innerHTML = Object.entries(p).map(([k, v]) => `<li><b>${k}</b> ${esc(v)}</li>`).join("");
+  $("#policy").innerHTML = Object.entries(p).map(([k, v]) => `<div><span class="rule">${k}</span><span>${esc(v)}</span></div>`).join("");
 });
 api("GET", "/config").then((c) => { stripeAcct = c.stripe_account; render(true); }).catch(() => {});
 setRole(role);
